@@ -148,12 +148,18 @@ public class MainActivity extends AppCompatActivity {
         m = p.matcher(res);
         while (m.find()) {
             String data = m.group(1);
-            title.add(data);
-            if (data.charAt(data.length()-1) == '/') {
+            if (data.equals("Parent Directory")) {
+                title.add(data);
+                // It is to go to parent directory
+                icons.add(R.drawable.backicon);
+            }
+            else if (data.charAt(data.length()-1) == '/') {
+                title.add(data.substring(0, data.length()-1));
                 // It is a folder
                 icons.add(R.drawable.foldericon);
             }
             else {
+                title.add(data);
                 // It is a file
                 icons.add(R.drawable.fileicon);
             }
