@@ -1,12 +1,15 @@
 package com.example.intranetdata;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.PatternMatcher;
 import android.service.autofill.FieldClassification;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -39,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
 
     MyListAdapter adapter;
 
+    boolean doubleBackPressed = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
         listView = (ListView) findViewById(R.id.listView);
         adapter = new MyListAdapter(this, title, icons, dateMod, timeMod);
         listView.setAdapter(adapter);
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         String res = "";
         try {
@@ -63,27 +71,20 @@ public class MainActivity extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                if (!links.get(i).equals("/")) {
-                    String resNew = "";
-                    DownloadData downloadData = new DownloadData();
-                    try {
-                        String newUrl;
-                        if (i == 0) {
-                            newUrl = baseUrl + links.get(i);
-                            currentUrl = baseUrl + links.get(i);
-                        }
-                        else {
-                            newUrl = currentUrl + links.get(i);
-                            currentUrl = currentUrl + links.get(i);
-                        }
-                        resNew = downloadData.execute(newUrl).get();
+                String resNew = "";
+                DownloadData downloadData = new DownloadData();
+                try {
+                    String newUrl;
+                    newUrl = currentUrl + links.get(i+1);
+                    currentUrl = currentUrl + links.get(i+1);
 
-                        getDataFromHTML(resNew);
-                    }
-                    catch (Exception e) {
-                        e.printStackTrace();
-                        Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
+                    resNew = downloadData.execute(newUrl).get();
+
+                    getDataFromHTML(resNew);
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -135,8 +136,8 @@ public class MainActivity extends AppCompatActivity {
         dateMod.clear();
         timeMod.clear();
 
-        dateMod.add("-");
-        timeMod.add("-");
+//        dateMod.add("");
+//        timeMod.add("");
 
         Pattern p = Pattern.compile("<td><a href=\"(.*?)\">");
         Matcher m = p.matcher(res);
@@ -148,12 +149,12 @@ public class MainActivity extends AppCompatActivity {
         m = p.matcher(res);
         while (m.find()) {
             String data = m.group(1);
-            if (data.equals("Parent Directory")) {
-                title.add(data);
-                // It is to go to parent directory
-                icons.add(R.drawable.backicon);
-            }
-            else if (data.charAt(data.length()-1) == '/') {
+//            if (data.equals("Parent Directory")) {
+//                title.add(data);
+////                 It is to go to parent directory
+//                icons.add(R.drawable.backicon);
+//            }
+            if (data.charAt(data.length()-1) == '/') {
                 title.add(data.substring(0, data.length()-1));
                 // It is a folder
                 icons.add(R.drawable.foldericon);
@@ -177,10 +178,55 @@ public class MainActivity extends AppCompatActivity {
             timeMod.add(time);
         }
 
+        title.remove(0);
+        icons.remove(0);
+
         Log.i("Titles --------->", title.toString());
         Log.i("Links --------->", links.toString());
 
         adapter.notifyDataSetChanged();
         listView.smoothScrollToPosition(0);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            if (!links.get(0).equals("/")) {
+                String resNew = "";
+                DownloadData downloadData = new DownloadData();
+                try {
+                    String newUrl;
+
+                    newUrl = baseUrl + links.get(0);
+                    currentUrl = baseUrl + links.get(0);
+
+                    resNew = downloadData.execute(newUrl).get();
+
+                    getDataFromHTML(resNew);
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (doubleBackPressed) {
+            super.onBackPressed();
+            return;
+        }
+        this.doubleBackPressed = true;
+        Toast.makeText(this, "click BACK again to exit", Toast.LENGTH_SHORT).show();
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                doubleBackPressed = false;
+            }
+        }, 2000);
     }
 }
