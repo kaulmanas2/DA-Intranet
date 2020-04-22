@@ -19,9 +19,12 @@ import android.widget.Toast;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.Format;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
@@ -44,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
 
     boolean doubleBackPressed = false;
 
+    HashMap<String, Integer> map = new HashMap<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,6 +60,8 @@ public class MainActivity extends AppCompatActivity {
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+        putIntoMap();
 
         String res = "";
         try {
@@ -160,12 +167,22 @@ public class MainActivity extends AppCompatActivity {
             if (data.charAt(data.length()-1) == '/') {
                 title.add(data.substring(0, data.length()-1));
                 // It is a folder
-                icons.add(R.drawable.foldericon);
+                icons.add(map.get("folder"));
+
             }
             else {
                 title.add(data);
                 // It is a file
-                icons.add(R.drawable.fileicon);
+
+                String type = "";
+                if (data.charAt(data.length()-4) == '.') {
+                    type = data.substring(data.length()-4);
+                }
+                else if (data.charAt(data.length()-5) == '.') {
+                    type = data.substring(data.length()-5);
+                }
+
+                icons.add(map.getOrDefault(type, R.drawable.fileicon));
             }
         }
 
@@ -216,5 +233,22 @@ public class MainActivity extends AppCompatActivity {
                 doubleBackPressed = false;
             }
         }, 2000);
+    }
+
+    public void putIntoMap () {
+        map.put("folder", R.drawable.foldericon);
+        map.put("file", R.drawable.fileicon);
+        map.put(".pdf", R.drawable.pdf);
+        map.put(".txt", R.drawable.txt);
+        map.put(".doc", R.drawable.doc);
+        map.put(".docx", R.drawable.docx);
+        map.put(".ppt", R.drawable.ppt);
+        map.put(".pptx", R.drawable.pptx);
+        map.put(".jpg", R.drawable.jpg);
+        map.put(".log", R.drawable.log);
+        map.put(".rar", R.drawable.rar);
+        map.put(".sql", R.drawable.sql);
+        map.put(".tex", R.drawable.tex);
+        map.put(".zip", R.drawable.zip);
     }
 }
